@@ -1,0 +1,83 @@
+from rest_framework import serializers
+from .models import User
+from django.contrib.auth import authenticate
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed 
+from rest_framework import serializers
+from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers
+
+class RegisterSerializer(serializers.ModelSerializer):
+
+    password = serializers.CharField(
+        write_only=True,
+        min_length=8
+    )
+
+    class Meta:
+        model = User
+
+        fields = [
+            "username",
+            "email",
+            "password"
+        ]
+
+    def create(self, validated_data):
+
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            email=validated_data["email"],
+            password=validated_data["password"]
+        )
+
+        return user
+    
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):    
+
+    username_field = "email"
+
+    def validate(self, attrs):
+
+        email = attrs.get("email")
+        password = attrs.get("password")
+
+        user = authenticate(
+            email=email,
+            password=password
+        )
+
+        if user is None:
+            raise AuthenticationFailed(
+                "Invalid email or password"
+            )
+        if not user.is_verified:
+            raise AuthenticationFailed(
+        "Please verify your email first."
+    )
+        refresh = self.get_token(user)
+
+        return {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token)
+        }
+
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+
+    email = serializers.EmailField()
+
+class ResetPasswordSerializer(serializers.Serializer):
+
+    password = serializers.CharField(
+        min_length=8
+    )
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        validate_password(value)
+        return value
