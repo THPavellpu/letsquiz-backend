@@ -21,13 +21,13 @@ class Quiz(models.Model):
         related_name="quizzes"
     )
 
-    total_time_minutes = models.PositiveIntegerField()
-
-    question_time_seconds = models.PositiveIntegerField(
+    total_time_minutes = models.PositiveIntegerField(
         null=True,
         blank=True
     )
-
+    use_quiz_timer = models.BooleanField(
+    default=True
+    )
     use_question_timer = models.BooleanField(
         default=False
     )
@@ -44,7 +44,10 @@ class Quiz(models.Model):
         default=True
     )
 
-    join_deadline = models.DateTimeField()
+    join_deadline = models.DateTimeField(
+        null=True,
+        blank=True
+    )
 
     is_active = models.BooleanField(
         default=True
@@ -57,10 +60,9 @@ class Quiz(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
-
     def __str__(self):
         return self.title
-
+    
 class Question(models.Model):
 
     quiz = models.ForeignKey(
@@ -77,8 +79,20 @@ class Question(models.Model):
         default=1
     )
 
+    time_limit_seconds = models.PositiveIntegerField(
+    default=30
+    )
+
     def __str__(self):
         return self.question_text
+    class Meta:
+        unique_together = (
+            "quiz",
+            "order"
+        )
+        ordering = [
+            "order"
+        ]
     
 class Option(models.Model):
 
@@ -98,6 +112,12 @@ class Option(models.Model):
 
     def __str__(self):
         return self.option_text
+
+    class Meta:
+        unique_together = (
+            "question",
+            "option_text"
+        )
 class QuizAttempt(models.Model):
 
     quiz = models.ForeignKey(
@@ -129,12 +149,25 @@ class QuizAttempt(models.Model):
         default=False
     )
 
-    class Meta:
+    current_question_order = models.PositiveIntegerField(
+        default=1
+    )
 
+    current_question_started_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
         unique_together = (
             "quiz",
             "user"
         )
+        indexes = [
+            models.Index(fields=["quiz"]),
+            models.Index(fields=["user"]),
+            models.Index(fields=["completed"]),
+        ]
 class Answer(models.Model):
 
     attempt = models.ForeignKey(
@@ -162,3 +195,7 @@ class Answer(models.Model):
         "attempt",
         "question"
     )
+        indexes = [
+        models.Index(fields=["question"]),
+        models.Index(fields=["attempt"]),
+    ]

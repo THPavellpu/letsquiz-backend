@@ -1,5 +1,4 @@
 import os
-print("ASGI FILE LOADED")
 from django.core.asgi import get_asgi_application
 
 from channels.routing import (

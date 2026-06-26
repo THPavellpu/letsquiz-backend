@@ -18,7 +18,11 @@ from .serializers import ForgotPasswordSerializer
 from .serializers import ResetPasswordSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import check_password
+from django.shortcuts import redirect
+from django.conf import settings
 from .serializers import ChangePasswordSerializer
+from .serializers import ProfileStatsSerializer
+from quizzes.models import Quiz, QuizAttempt
 
 
 class RegisterView(generics.CreateAPIView):
@@ -27,6 +31,7 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
+        print("=== REGISTER VIEW REACHED ===")
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -39,15 +44,61 @@ class RegisterView(generics.CreateAPIView):
 
         token = email_verification_token.make_token(user)
 
-        verification_link = (
-            f"http://127.0.0.1:8000/api/auth/verify-email/"
-            f"{uidb64}/{token}/"
+        # Build verification URL dynamically (works across deployments).
+        # accounts/urls.py already defines: verify-email/<uidb64>/<token>/
+        verification_link = request.build_absolute_uri(
+            f"/api/auth/verify-email/{uidb64}/{token}/"
         )
 
-        return Response({
-            "message": "User registered successfully",
-            "verification_link": verification_link
-        })  
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info(
+            "Verification URL generated",
+            extra={"username": user.username, "verification_url": verification_link},
+        )
+
+        # Attempt to send verification email; registration must not crash.
+        try:
+            from quizzes.email_service import send_verification_email
+
+            logger.info("About to call send_verification_email")
+            print("=== BEFORE EMAIL ===")
+
+            send_verification_email(
+                user_email=user.email,
+                username=user.username,
+                verification_link=verification_link,
+            )
+            print("=== AFTER EMAIL ===")
+
+            logger.info("send_verification_email finished")
+
+            logger.info(
+                "Email sent successfully",
+                extra={"recipient": user.email, "username": user.username, "verification_url": verification_link},
+            )
+
+            return Response({
+                "message": "Registration successful. Please check your email to verify your account."
+            })
+        except Exception as e:
+            # Log full error details but never crash the registration endpoint.
+            logger.exception(
+                "Resend API errors: Failed to send verification email",
+                extra={
+                    "recipient": user.email,
+                    "username": user.username,
+                    "verification_url": verification_link,
+                    "exception": str(e),
+                },
+            )
+
+            return Response({
+                "message": "Registration completed but verification email could not be sent."
+            })
+
+
 class ProfileView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -67,30 +118,24 @@ class EmailLoginView(TokenObtainPairView):
 class VerifyEmailView(APIView):
 
     def get(self, request, uidb64, token):
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
 
         try:
             user_id = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=user_id)
 
         except Exception:
-            return Response(
-                {"error": "Invalid verification link"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return redirect(f"{frontend_url}/verify-failed?reason=invalid")
+
+        if user.is_verified:
+            return redirect(f"{frontend_url}/verify-failed?reason=already_verified")
 
         if email_verification_token.check_token(user, token):
-
             user.is_verified = True
             user.save()
+            return redirect(f"{frontend_url}/verify-success")
 
-            return Response({
-                "message": "Email verified successfully"
-            })
-
-        return Response(
-            {"error": "Invalid or expired token"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return redirect(f"{frontend_url}/verify-failed?reason=expired")
 class ForgotPasswordView(APIView):
 
     def post(self, request):
@@ -208,3 +253,36 @@ class ChangePasswordView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class ProfileStatsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        total_quizzes_created = Quiz.objects.filter(
+            creator=request.user
+        ).count()
+
+        participations = QuizAttempt.objects.filter(
+            user=request.user
+        ).count()
+
+        completed_quizzes = QuizAttempt.objects.filter(
+            user=request.user,
+            completed=True
+        ).count()
+
+        attempts = QuizAttempt.objects.filter(user=request.user)
+
+        if attempts.exists():
+            total_score = sum(attempt.score for attempt in attempts)
+            average_score = round(total_score / attempts.count(), 2)
+        else:
+            average_score = 0
+
+        return Response({
+            "total_quizzes_created": total_quizzes_created,
+            "participations": participations,
+            "completed_quizzes": completed_quizzes,
+            "average_score": average_score,
+        })

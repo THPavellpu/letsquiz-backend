@@ -7,7 +7,8 @@ from .views import (
     EmailLoginView,
     VerifyEmailView,
     ForgotPasswordView,
-    ResetPasswordView
+    ResetPasswordView,
+    ProfileStatsView,
 
 )
 
@@ -55,5 +56,10 @@ urlpatterns = [
     "change-password/",
     ChangePasswordView.as_view(),
     name="change-password"
-),                                              
+    ),
+    path(
+    "profile-stats/",
+    ProfileStatsView.as_view(),
+    name="profile-stats"
+    ),
 ]

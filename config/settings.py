@@ -13,6 +13,20 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 
+import os
+import pathlib
+
+# Load local .env (development convenience). Do not expose secrets to frontend.
+try:
+    from dotenv import load_dotenv  # type: ignore
+except Exception:
+    load_dotenv = None
+
+if load_dotenv:
+    env_path = pathlib.Path(__file__).resolve().parent.parent / '.env'
+    load_dotenv(dotenv_path=str(env_path))
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +40,10 @@ SECRET_KEY = 'django-insecure-f)5!jbzyx7++50&h0jci8b^m99t0=l#2j#jwbct)n-myie@ow0
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'letsquiz.online']
+
+# Frontend URL for email verification redirects
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
 
 # Application definition
@@ -49,6 +66,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -56,6 +75,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -139,6 +160,7 @@ REST_FRAMEWORK = {
     ),
 }
 AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
     'accounts.backends.EmailBackend',
 ]
 
@@ -165,3 +187,61 @@ CHANNEL_LAYERS = {
         }
     }
 }
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+# ==========================================
+# Gemini AI Configuration
+# ==========================================
+
+GEMINI_API_KEY = os.getenv(
+    "GEMINI_API_KEY"
+)
+
+GEMINI_MODEL = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash"
+)
+
+# ==========================================
+# Resend Email Verification Configuration
+# ==========================================
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+EMAIL_FROM = "LetsQuiz <noreply@letsquiz.online>"
+
+# ==========================================
+# Logging Configuration
+# ==========================================
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG",
+    },
+    "loggers": {
+        "accounts": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "quizzes": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+

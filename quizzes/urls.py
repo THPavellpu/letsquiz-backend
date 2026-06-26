@@ -1,73 +1,143 @@
 from django.urls import path
-from .views import AttemptStatusView, LogoutView, QuizByCodeView, QuizCreateView
 from .views import (
+    AttemptStatusView,
+    AttemptResultView,
+    LogoutView,
+    QuizByCodeView,
     QuizCreateView,
     QuestionCreateView,
     OptionCreateView,
-    QuizByCodeView,
     JoinQuizView,
     SubmitAnswerView,
     FinishQuizView,
     LeaderboardView,
-    QuizDashboardView
+    QuizDashboardView,
+    GetCurrentQuestionView,
+    NextQuestionView,
+    SkipQuestionView,
+    CreateQuestionWithOptionsView,
+    QuizAnalyticsView,
+    QuizSummaryView,
+    CreatorDashboardView,
+    MyPerformanceView,
+    CreatorLeaderboardsView,
+    GenerateAIQuizView,
 )
 
-urlpatterns = [
 
+
+urlpatterns = [
     path(
         "",
         QuizCreateView.as_view(),
-        name="quiz-create"
+        name="quiz-create",
+    ),
+    path(
+        "<int:quiz_id>/analytics/",
+        QuizAnalyticsView.as_view(),
+        name="quiz-analytics",
     ),
     path(
         "questions/",
         QuestionCreateView.as_view(),
-        name="question-create"
+        name="question-create",
     ),
     path(
-    "options/",
-    OptionCreateView.as_view(),
-    name="option-create"
+        "options/",
+        OptionCreateView.as_view(),
+        name="option-create",
     ),
     path(
-    "code/<str:quiz_code>/",
-    QuizByCodeView.as_view(),
-    name="quiz-by-code"
-),
+        "code/<str:quiz_code>/",
+        QuizByCodeView.as_view(),
+        name="quiz-by-code",
+    ),
     path(
-    "code/<str:quiz_code>/",
-    QuizByCodeView.as_view(),
-    name="quiz-by-code"
-),
+        "join/",
+        JoinQuizView.as_view(),
+        name="join-quiz",
+    ),
     path(
-    "join/",
-    JoinQuizView.as_view(),
-    name="join-quiz"
-),
+        "submit-answer/",
+        SubmitAnswerView.as_view(),
+        name="submit-answer",
+    ),
     path(
-    "submit-answer/",
-    SubmitAnswerView.as_view(),
-    name="submit-answer"
-),
-path(
-    "finish/",
-    FinishQuizView.as_view(),
-    name="finish-quiz"
-),
-path(
-    "<int:quiz_id>/leaderboard/",
-    LeaderboardView.as_view(),
-    name="leaderboard"
-),
-path(
-    "<int:quiz_id>/dashboard/",
-    QuizDashboardView.as_view(),
-    name="quiz-dashboard"
-),
-path(
-    "attempt/<int:attempt_id>/status/",
-    AttemptStatusView.as_view(),
-    name="attempt-status"
-),
-path("logout/", LogoutView.as_view(), name="logout"),
+        "finish/",
+        FinishQuizView.as_view(),
+        name="finish-quiz",
+    ),
+    path(
+        "<int:quiz_id>/leaderboard/",
+        LeaderboardView.as_view(),
+        name="leaderboard",
+    ),
+    path(
+        "<int:quiz_id>/dashboard/",
+        QuizDashboardView.as_view(),
+        name="quiz-dashboard",
+    ),
+    path(
+        "<int:quiz_id>/summary/",
+        QuizSummaryView.as_view(),
+        name="quiz-summary",
+    ),
+    path(
+        "attempt/<int:attempt_id>/status/",
+        AttemptStatusView.as_view(),
+        name="attempt-status",
+    ),
+    path(
+        "attempt-result/<int:attempt_id>/",
+        AttemptResultView.as_view(),
+        name="attempt-result",
+    ),
+    path(
+        "attempt/<int:attempt_id>/current-question/",
+        GetCurrentQuestionView.as_view(),
+        name="get-current-question",
+    ),
+    path(
+        "attempt/next-question/",
+        NextQuestionView.as_view(),
+        name="next-question",
+    ),
+    path(
+        "attempt/skip-question/",
+        SkipQuestionView.as_view(),
+        name="skip-question",
+    ),
+    path(
+        "create-question-with-options/",
+        CreateQuestionWithOptionsView.as_view(),
+        name="create-question-with-options",
+    ),
+    path(
+        "logout/",
+        LogoutView.as_view(),
+        name="logout",
+    ),
+    path(
+        "my-dashboard/",
+        CreatorDashboardView.as_view(),
+        name="creator-dashboard",
+    ),
+    path(
+        "my-performance/",
+        MyPerformanceView.as_view(),
+        name="my-performance",
+    ),
+    path(
+        "my-leaderboards/",
+        CreatorLeaderboardsView.as_view(),
+        name="my-leaderboards",
+    ),
+    path(
+        "generate-ai/",
+        GenerateAIQuizView.as_view(),
+        name="generate-ai",
+    ),
 ]
+
+
+

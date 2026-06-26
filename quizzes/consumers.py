@@ -1,5 +1,8 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LeaderboardConsumer(AsyncWebsocketConsumer):
@@ -28,8 +31,6 @@ class LeaderboardConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({"received": data}))
 
     async def leaderboard_update(self, event):
-        print("LEADERBOARD EVENT RECEIVED")
-
         await self.send(
             text_data=json.dumps({
                 "type": "leaderboard_update",

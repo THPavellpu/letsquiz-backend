@@ -81,3 +81,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     def validate_new_password(self, value):
         validate_password(value)
         return value
+
+
+class ProfileStatsSerializer(serializers.Serializer):
+    total_quizzes_created = serializers.IntegerField()
+    participations = serializers.IntegerField()
+    completed_quizzes = serializers.IntegerField()
+    average_score = serializers.FloatField()
