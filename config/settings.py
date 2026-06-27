@@ -186,10 +186,10 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
-# CORS_ALLOWED_ORIGINS = os.getenv(
-#     "CORS_ALLOWED_ORIGINS",
-#     "http://localhost:5173"
-# ).split(",")
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS",
+    "http://localhost:5173"
+).split(",")
 CORS_ALLOW_ALL_ORIGINS = True
 # CSRF_TRUSTED_ORIGINS = os.getenv(
 #     "CSRF_TRUSTED_ORIGINS",
