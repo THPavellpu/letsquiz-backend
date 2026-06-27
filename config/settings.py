@@ -190,11 +190,11 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:5173"
 ).split(",")
-CORS_ALLOW_ALL_ORIGINS = True
-# CSRF_TRUSTED_ORIGINS = os.getenv(
-#     "CSRF_TRUSTED_ORIGINS",
-#     "http://localhost:5173"
-# ).split(",")    
+# CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:5173"
+).split(",")    
 # ==========================================
 # Gemini AI Configuration
 # ==========================================
@@ -250,7 +250,3 @@ LOGGING = {
     },
 }
 
-print("DEBUG =", DEBUG)
-print("ALLOWED_HOSTS =", ALLOWED_HOSTS)
-print("CORS_ALLOWED_ORIGINS =", CORS_ALLOWED_ORIGINS)
-print("CSRF_TRUSTED_ORIGINS =", CSRF_TRUSTED_ORIGINS)
