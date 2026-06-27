@@ -67,18 +67,17 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
+    "corsheaders.middleware.CorsMiddleware",
 
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -183,18 +182,8 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
 }
 CHANNEL_LAYERS = {
-
     "default": {
-
-        "BACKEND":
-        "channels_redis.core.RedisChannelLayer",
-
-        "CONFIG": {
-
-            "hosts": [
-                ("127.0.0.1", 6379)
-            ]
-        }
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     }
 }
 CORS_ALLOWED_ORIGINS = os.getenv(
@@ -261,3 +250,7 @@ LOGGING = {
     },
 }
 
+print("DEBUG =", DEBUG)
+print("ALLOWED_HOSTS =", ALLOWED_HOSTS)
+print("CORS_ALLOWED_ORIGINS =", CORS_ALLOWED_ORIGINS)
+print("CSRF_TRUSTED_ORIGINS =", CSRF_TRUSTED_ORIGINS)
