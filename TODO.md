@@ -1,19 +1,32 @@
-# LetsQuiz - Deployment Checklist
+# TODO - LetsQuiz Landing/Stats/FAQ Backend
 
-## Completed Items
-- [x] 1) Branding updated from FastQuiz to LetsQuiz
-- [x] 2) EMAIL_FROM updated to LetsQuiz <noreply@letsquiz.online>
-- [x] 3) Email template redesigned with professional HTML
-- [x] 4) Debug print statements removed from email_service.py
-- [x] 5) Debug print statements removed from consumers.py
-- [x] 6) Debug print statements removed from views.py
-- [x] 7) Debug print statements removed from config/asgi.py
+## Phase 1: Contract alignment + correctness
+- [ ] Update `/api/statistics/` response fields to exactly match spec.
 
-## Pre-Deployment Verification Needed
-- [ ] Run registration and verify email is sent
-- [ ] Check email content displays correctly
-- [ ] Test verification link works
-- [ ] Verify account gets activated after clicking link
-- [ ] Test second click on same link (should show error)
-- [ ] Test invalid token handling
-- [ ] Test invalid UID handling
+- [ ] Fix landing page statistics subsection to match spec keys and dynamic values (no hardcoded satisfaction unless stored/configured).
+- [ ] Refactor shared statistics calculation into `apps/landing/services.py` (single source of truth).
+
+## Phase 2: Platform statistics
+- [ ] Implement `top_categories`, `most_active_users`, `newest_quizzes` per spec (avoid empty placeholders).
+
+## Phase 3: Performance + caching
+- [ ] Optimize statistics calculations with aggregates; avoid N+1 loops.
+- [ ] Ensure landing endpoint caching is coherent with dynamic stats (cache strategy refined).
+
+## Phase 4: Security
+- [ ] Harden newsletter/contact spam protection (server-side validations; ensure throttles are applied).
+- [ ] Ensure admin-only endpoints use consistent permissions.
+
+## Phase 5: Swagger/OpenAPI + documentation
+- [ ] Add/enable Swagger/OpenAPI (drf-spectacular or drf-yasg depending on dependencies).
+- [ ] Annotate endpoints with schema/serializer examples.
+
+## Phase 6: Tests
+- [ ] Update `apps/landing/tests.py` to assert spec-required fields for `/api/statistics/` and `/api/landing/`.
+- [ ] Add tests for platform statistics fields presence.
+
+## Phase 7: Verify
+- [ ] Run migrations (if needed).
+- [ ] Run `python manage.py test`.
+- [ ] Quick manual request checks for each endpoint.
+

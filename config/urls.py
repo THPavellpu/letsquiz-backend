@@ -24,7 +24,11 @@ urlpatterns = [
         include("accounts.urls")
     ),
     path(
-    "api/quizzes/",
-    include("quizzes.urls")
-),
+        "api/quizzes/",
+        include("quizzes.urls")
+    ),
+    path(
+        "api/",
+        include("apps.landing.urls")
+    ),
 ]
