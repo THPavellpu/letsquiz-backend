@@ -139,6 +139,10 @@ class VerifyEmailView(APIView):
 class ForgotPasswordView(APIView):
 
     def post(self, request):
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.info("Forgot password request received")
 
         serializer = ForgotPasswordSerializer(
             data=request.data
@@ -148,31 +152,66 @@ class ForgotPasswordView(APIView):
 
         email = serializer.validated_data["email"]
 
+        logger.info(f"Looking up user with email: {email}")
+
         try:
             user = User.objects.get(email=email)
 
         except User.DoesNotExist:
-            return Response(
-                {"error": "User not found"},
-                status=404
-            )
+            logger.warning(f"User not found for email: {email}")
+            # Return the same message whether user exists or not (security best practice)
+            return Response({
+                "message": "If an account with this email exists, a password reset link has been sent."
+            })
+
+        logger.info(f"User found: {user.username}")
 
         uidb64 = urlsafe_base64_encode(
             force_bytes(user.id)
         )
 
+        logger.info("Generating password reset token")
+
         token = email_verification_token.make_token(
             user
         )
 
+        # Use FRONTEND_URL for the reset link (not backend URL)
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
         reset_link = (
-            f"http://127.0.0.1:8000/api/auth/reset-password/"
+            f"{frontend_url}/reset-password/"
             f"{uidb64}/{token}/"
         )
 
+        logger.info(f"Reset URL generated: {reset_link}")
+
+        # Send the password reset email
+        try:
+            from quizzes.email_service import send_password_reset_email
+
+            logger.info("Calling send_password_reset_email")
+
+            send_password_reset_email(
+                user_email=user.email,
+                username=user.username,
+                reset_link=reset_link,
+            )
+
+            logger.info("Password reset email sent successfully")
+
+        except Exception as e:
+            # Log the error but don't expose details to the user
+            logger.exception(
+                "Failed to send password reset email",
+                extra={
+                    "recipient": user.email,
+                    "exception": str(e),
+                },
+            )
+
+        # Always return the same message (don't reveal if user exists)
         return Response({
-            "message": "Password reset link generated",
-            "reset_link": reset_link
+            "message": "If an account with this email exists, a password reset link has been sent."
         })
 class ResetPasswordView(APIView):
 
