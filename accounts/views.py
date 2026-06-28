@@ -3,8 +3,9 @@ from .models import User
 from .serializers import RegisterSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .serializers import EmailTokenObtainPairSerializer
 from django.shortcuts import get_object_or_404
 from django.utils.http import urlsafe_base64_decode
@@ -27,8 +28,10 @@ from quizzes.models import Quiz, QuizAttempt
 
 class RegisterView(generics.CreateAPIView):
 
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+
 
     def create(self, request, *args, **kwargs):
         print("=== REGISTER VIEW REACHED ===")
@@ -114,8 +117,14 @@ class ProfileView(APIView):
         })  
 class EmailLoginView(TokenObtainPairView):
 
+    permission_classes = [AllowAny]
+
+
     serializer_class = EmailTokenObtainPairSerializer
 class VerifyEmailView(APIView):
+
+    permission_classes = [AllowAny]
+
 
     def get(self, request, uidb64, token):
         frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -137,6 +146,9 @@ class VerifyEmailView(APIView):
 
         return redirect(f"{frontend_url}/verify-failed?reason=expired")
 class ForgotPasswordView(APIView):
+
+    permission_classes = [AllowAny]
+
 
     def post(self, request):
         import logging
@@ -214,6 +226,9 @@ class ForgotPasswordView(APIView):
             "message": "If an account with this email exists, a password reset link has been sent."
         })
 class ResetPasswordView(APIView):
+
+    permission_classes = [AllowAny]
+
 
     def post(self, request, uidb64, token):
 
