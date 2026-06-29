@@ -9,6 +9,7 @@ from .views import (
     ForgotPasswordView,
     ResetPasswordView,
     ProfileStatsView,
+    ResendVerificationView,
 
 )
 
@@ -61,5 +62,10 @@ urlpatterns = [
     "profile-stats/",
     ProfileStatsView.as_view(),
     name="profile-stats"
+    ),
+    path(
+        "resend-verification/",
+        ResendVerificationView.as_view(),
+        name="resend-verification"
     ),
 ]

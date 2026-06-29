@@ -25,6 +25,10 @@ from .serializers import ChangePasswordSerializer
 from .serializers import ProfileStatsSerializer
 from quizzes.models import Quiz, QuizAttempt
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class RegisterView(generics.CreateAPIView):
 
@@ -339,4 +343,87 @@ class ProfileStatsView(APIView):
             "participations": participations,
             "completed_quizzes": completed_quizzes,
             "average_score": average_score,
+        })
+
+
+class ResendVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal whether the user exists - security best practice
+            logger.info(
+                "Resend verification requested for non-existent email",
+                extra={"email": email}
+            )
+            return Response({
+                "message": "If an account exists and is not yet verified, a verification email has been sent."
+            })
+
+        # If user exists but is already verified, do not send another email
+        if user.is_verified:
+            logger.info(
+                "Resend verification requested for already verified user",
+                extra={"email": email, "user_id": user.id}
+            )
+            return Response({
+                "message": "If an account exists and is not yet verified, a verification email has been sent."
+            })
+
+        # User exists and is not verified - generate new token and send email
+        logger.info(
+            "Resending verification email",
+            extra={"email": email, "user_id": user.id}
+        )
+
+        uidb64 = urlsafe_base64_encode(
+            force_bytes(user.id)
+        )
+
+        token = email_verification_token.make_token(user)
+
+        # Build verification URL
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        verification_link = request.build_absolute_uri(
+            f"/api/auth/verify-email/{uidb64}/{token}/"
+        )
+
+        try:
+            from quizzes.email_service import send_verification_email
+
+            send_verification_email(
+                user_email=user.email,
+                username=user.username,
+                verification_link=verification_link,
+            )
+
+            logger.info(
+                "Verification email resent successfully",
+                extra={"email": email, "user_id": user.id}
+            )
+
+        except Exception as e:
+            logger.exception(
+                "Failed to resend verification email",
+                extra={
+                    "email": email,
+                    "user_id": user.id,
+                    "exception": str(e),
+                },
+            )
+
+        # Always return the same message to prevent email enumeration
+        return Response({
+            "message": "If an account exists and is not yet verified, a verification email has been sent."
         })

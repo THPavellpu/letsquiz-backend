@@ -1,11 +1,14 @@
+import logging
+
 from rest_framework import serializers
 from .models import User
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework.exceptions import AuthenticationFailed 
-from rest_framework import serializers
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework import status
 from django.contrib.auth.password_validation import validate_password
-from rest_framework import serializers
+
+logger = logging.getLogger(__name__)
 
 class RegisterSerializer(serializers.ModelSerializer):
 
@@ -33,7 +36,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         return user
     
-class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):    
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
 
     username_field = "email"
 
@@ -48,13 +51,37 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
         )
 
         if user is None:
-            raise AuthenticationFailed(
-                "Invalid email or password"
+            logger.warning(
+                "Login failed: invalid credentials",
+                extra={"email": email}
             )
-        if not user.is_verified:
             raise AuthenticationFailed(
-        "Please verify your email first."
-    )
+                {
+                    "code": "INVALID_CREDENTIALS",
+                    "message": "Invalid email or password."
+                }
+            )
+
+        if not user.is_verified:
+            logger.warning(
+                "Login failed: email not verified",
+                extra={"email": email, "user_id": user.id}
+            )
+            exc = AuthenticationFailed(
+                {
+                    "code": "EMAIL_NOT_VERIFIED",
+                    "message": "Your email address has not been verified. Please check your inbox and click the verification link before logging in.",
+                    "can_resend_verification": True
+                }
+            )
+            exc.status_code = status.HTTP_403_FORBIDDEN
+            raise exc
+
+        logger.info(
+            "Login successful",
+            extra={"email": email, "user_id": user.id}
+        )
+
         refresh = self.get_token(user)
 
         return {
